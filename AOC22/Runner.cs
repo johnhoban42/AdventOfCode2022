@@ -6,6 +6,7 @@ public class Runner
         (dynamic part1, dynamic part2) = day switch
         {
             1 => new Day01().SolveTimed(),
+            2 => new Day02().SolveTimed(),
             _ => throw new NotSupportedException()
         };
         Console.WriteLine($"PART 1: {part1}");
