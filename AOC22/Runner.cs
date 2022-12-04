@@ -8,6 +8,7 @@ public class Runner
             1 => new Day01().SolveTimed(),
             2 => new Day02().SolveTimed(),
             3 => new Day03().SolveTimed(),
+            4 => new Day04().SolveTimed(),
             _ => throw new NotSupportedException()
         };
         Console.WriteLine($"PART 1: {part1}");
