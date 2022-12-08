@@ -92,17 +92,12 @@ class Day07 : Solver
         }
 
         // Calculate total size of directories with size <= 100,000
-        int part1 = nodes.Where(node => node.IsDir)
-            .Select(node => node.Size())
-            .Where(size => size < 100_000)
-            .Sum();
+        IEnumerable<int> dirSizes = nodes.Where(node => node.IsDir).Select(node => node.Size());
+        int part1 = dirSizes.Where(size => size < 100_000).Sum();
 
         // Find the smallest directory such that free space once deleted >= 30_000_000
-        int part2 = nodes.Where(node => node.IsDir)
-            .Select(node => node.Size())
-            .Where(size => 30_000_000 <= 70_000_000 - root.Size() + size)
-            .Order()
-            .First();
+        int freeSpace = 70_000_000 - root.Size();
+        int part2 = dirSizes.Where(size => 30_000_000 <= freeSpace + size).Min();
 
         return (part1, part2);
     }
