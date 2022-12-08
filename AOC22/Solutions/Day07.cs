@@ -1,30 +1,19 @@
 class INode
 {
-    private string NodeName;
     private int FileSize;
     private int CachedDirSize = -1;
-    //public string Name { get; }
+    public string Name { get; }
     public bool IsDir { get; }
-    public List<INode> Children { get; }
+    public Dictionary<string, INode> Children { get; }
     public INode? Parent { get; }
-
-    public string Name()
-    {
-        if (Parent == null)
-        {
-            return NodeName;
-        }
-        return Parent.Name() + "/" + NodeName;
-    }
     
     public int Size()
     {
         if (IsDir)
         {
-            if (CachedDirSize == -1)
-            {
-                CachedDirSize = Children.Select(node => node.Size()).Sum(); 
-            }
+            CachedDirSize = (CachedDirSize != -1)
+                ? CachedDirSize
+                : Children.Values.Select(node => node.Size()).Sum(); 
             return CachedDirSize;
         }
         return FileSize;
@@ -32,14 +21,14 @@ class INode
 
     public override string ToString()
     {
-        return base.ToString() + " " + Name();
+        return base.ToString() + " " + Name;
     }
 
-    public INode(string nodeName, bool isDir, INode? parent, int fileSize = 0)
+    public INode(string name, bool isDir, INode? parent, int fileSize = 0)
     {
-        this.NodeName = nodeName;
+        this.Name = name;
         this.IsDir = isDir;
-        this.Children = new List<INode>(); 
+        this.Children = new Dictionary<string, INode>(); 
         this.Parent = parent;
         this.FileSize = fileSize;
     }
@@ -56,11 +45,9 @@ class Day07 : Solver
 
         /* PART 1 */
         // Build the directory tree
-        // Dictionary of INodes with each INode retrievable by its unique identifier
-        Dictionary<string, INode> nodes = new Dictionary<string, INode>();
-
-        // Traverse the input
-        nodes.Add("/", new INode("/", true, null));
+        List<INode> nodes = new List<INode>();
+        INode root = new INode("/", true, null);
+        nodes.Add(root);
         INode? parent = null;
         INode? current = null;
         foreach (string[] cmd in src)
@@ -71,7 +58,12 @@ class Day07 : Solver
             {
                 if (cmd[1] == "cd")
                 {
-                    if (cmd[2] == "..")
+                    if (cmd[2] == "/")
+                    {
+                        current = root;
+                        parent = null;
+                    }
+                    else if (cmd[2] == "..")
                     {
                         current = parent;
                         parent = current!.Parent;
@@ -79,14 +71,7 @@ class Day07 : Solver
                     else
                     {
                         parent = current;
-                        if (current == null)
-                        {
-                            current = nodes[cmd[2]];
-                        }
-                        else
-                        {
-                            current = nodes[current.Name() + "/" + cmd[2]];
-                        }
+                        current = current!.Children[cmd[2]];
                     }
                 }
             }
@@ -94,30 +79,28 @@ class Day07 : Solver
             else if (cmd[0] == "dir")
             {
                 INode node = new INode(cmd[1], true, current);
-                current!.Children.Add(node);
-                nodes.Add(node.Name(), node);
+                current!.Children.Add(cmd[1], node);
+                nodes.Add(node);
             }
             // Create a new file INode
             else
             {
                 INode node = new INode(cmd[1], false, current, Int32.Parse(cmd[0]));
-                current!.Children.Add(node);
-                nodes.Add(node.Name(), node);
+                current!.Children.Add(cmd[1], node);
+                nodes.Add(node);
             }
         }
 
         // Calculate total size of directories with size <= 100,000
-        int part1 = nodes.Values
-            .Where(node => node.IsDir)
+        int part1 = nodes.Where(node => node.IsDir)
             .Select(node => node.Size())
             .Where(size => size < 100_000)
             .Sum();
 
         // Find the smallest directory such that free space once deleted >= 30_000_000
-        int part2 = nodes.Values
-            .Where(node => node.IsDir)
+        int part2 = nodes.Where(node => node.IsDir)
             .Select(node => node.Size())
-            .Where(size => 30_000_000 <= 70_000_000 - nodes["/"].Size() + size)
+            .Where(size => 30_000_000 <= 70_000_000 - root.Size() + size)
             .Order()
             .First();
 
